@@ -1,3 +1,6 @@
+Project Overview: For this project, we will develop a 1D transport solver for a minimum of 3 energy groups. The final product will have a vacuum boundary on the left and a reflecting boundary on the right. It will account for heterogeneous media of two materials minimum.
+  We will incorporate the Sn method (it's the one he recommends).
+
 1 March
   Determine how to discretize the transport equation
     This requires looking at the transport equation and simplifying it to a differential equation. We'll have to look at how to discretize the equation into spatial steps so that it can be coded in a similar fashion to the diffusion equation code. My preferred method of iterative solvers (at least the one I found easiest to do) is the Gauss-Seidel solver, particularly because how Python treats objects like arrays. 
