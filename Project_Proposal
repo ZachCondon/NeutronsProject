@@ -1,0 +1,24 @@
+1 March
+  Determine how to discretize the transport equation
+    This requires looking at the transport equation and simplifying it to a differential equation. We'll have to look at how to discretize the equation into spatial steps so that it can be coded in a similar fashion to the diffusion equation code. My preferred method of iterative solvers (at least the one I found easiest to do) is the Gauss-Seidel solver, particularly because how Python treats objects like arrays. 
+8 March
+  Have code to do 1 group with homogenous material and reflective boundarys (Zach or Sunday)
+    This should be the simpliest example and will give us the best chance of developing a code for approximating the transport equation. Certainly we will be coding for a unique situation and will run into issues when implementing more difficult conditions, but starting with a code that definitely works will allow us to make small modifications to make it more versatile.
+15 March
+  Determine what needs to change in discretized for 2 materials (Zach or Sunday)
+    To get the code to work for two materials, we will have to handle the boundary condition between the two materials. This means we'll need to determine how the discretization will occur at the boundary so that the approximation is as error-free as possible.
+  Determine what needs to change in discretized equations for 2 or more groups (Zach or Sunday)
+    Two groups should be an easy transition, since the code will already be set up. We will need to duplicate the code using different constants for the new group as well as accounting for downscattering.
+22 March
+  Implement changes for 2 materials (Zach or Sunday)
+  Implement changes for 2 groups (Zach or Sunday)
+29 March
+  Implement different boundary conditions (Zach or Sunday)
+5 April
+  Have an outline for the research paper
+  Begin writing paper (Zach and Sunday) [we'll probably be doing this as we go, but I'll just have this in here as a start date]
+12 April
+  Finish paper (Zach and Sunday)
+  Refine code if needed (Zach and Sunday)
+26 April
+  Submit finished project code and paper (Zach and Sunday)
