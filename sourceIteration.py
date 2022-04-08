@@ -7,7 +7,7 @@ def initialize_problem_values():
     # establish the quadrature angles and weights.
     M = 2           # number of materials
     G = 3           # number of groups
-    N = 2           # number of angles (quadrature)
+    N = 16           # number of angles (quadrature)
     # The following lines establish the quadrature and determine the angles (mu)
     # and weights (w). The reverse commands are used to follow the same order
     # of angles and weights later in the code.
@@ -20,7 +20,7 @@ def initialize_problem_values():
     # The line below sets whether the right side of the simulation should have
     # a reflective boundary. Setting this equality to any other variable (except
     # for 1, since Python interprets that as True) will make the right side a vacuum.
-    reflective = True
+    reflective = 0
     return M,G,N,mu,w,reflective
 
 def define_cross_sections(numMaterials, numGroups):
@@ -38,31 +38,31 @@ def define_cross_sections(numMaterials, numGroups):
     Sigma_t = np.zeros((numMaterials,numGroups))
     # Sigma_t[material index, group index]
     Sigma_t[0,0],Sigma_t[0,1],Sigma_t[0,2] = 1,1,1  # Material 1 total cross-sections
-    Sigma_t[1,0],Sigma_t[1,1],Sigma_t[1,2] = 1,1,1  # Material 2 total cross-sections
+    Sigma_t[1,0],Sigma_t[1,1],Sigma_t[1,2] = 0,0,0  # Material 2 total cross-sections
 
     
     Sigma_s = np.zeros((numMaterials,numGroups,numGroups))
     # Sigma_s[material index, group index, scatter-to-group index]
     # Material 1 scattering cross-sections
-    Sigma_s[0,0,0] = 0.1    # G1->G1
+    Sigma_s[0,0,0] = 0.4    # G1->G1
     Sigma_s[0,0,1] = 0.3    # G1->G2
     Sigma_s[0,0,2] = 0.0    # G1->G3
     Sigma_s[0,1,0] = 0.0    # G2->G1
-    Sigma_s[0,1,1] = 0.1    # G2->G2
-    Sigma_s[0,1,2] = 0.0    # G2->G3
+    Sigma_s[0,1,1] = 0.2    # G2->G2
+    Sigma_s[0,1,2] = 0.1    # G2->G3
     Sigma_s[0,2,0] = 0.0    # G3->G1
     Sigma_s[0,2,1] = 0.0    # G3->G2
     Sigma_s[0,2,2] = 0.1    # G3->G3
     # Material 2 scattering cross-sections
-    Sigma_s[1,0,0] = 0.5    # G1->G1
+    Sigma_s[1,0,0] = 0.0    # G1->G1
     Sigma_s[1,0,1] = 0.0    # G1->G2
     Sigma_s[1,0,2] = 0.0    # G1->G3
     Sigma_s[1,1,0] = 0.0    # G2->G1
-    Sigma_s[1,1,1] = 0.4    # G2->G2
+    Sigma_s[1,1,1] = 0.0    # G2->G2
     Sigma_s[1,1,2] = 0.0    # G2->G3
     Sigma_s[1,2,0] = 0.0    # G3->G1
     Sigma_s[1,2,1] = 0.0    # G3->G2
-    Sigma_s[1,2,2] = 0.2    # G3->G3
+    Sigma_s[1,2,2] = 0.0    # G3->G3
     return Sigma_t, Sigma_s
 
 def define_source(numMaterials,numGroups):
@@ -74,9 +74,9 @@ def define_source(numMaterials,numGroups):
     Q[0,1] = 0.1    # G2
     Q[0,2] = 0.1    # G3
     # Material 2 source strength
-    Q[1,0] = 0.1    # G1
-    Q[1,1] = 0.1    # G2
-    Q[1,2] = 0.1    # G3
+    Q[1,0] = 0.0    # G1
+    Q[1,1] = 0.0    # G2
+    Q[1,2] = 0.0    # G3
     return Q
 
 def define_material(Sigma_t,M):
@@ -84,12 +84,24 @@ def define_material(Sigma_t,M):
     # the minimum total cross-section). This ensures that the group with the 
     # largest mean free path (since mfp=1/Sigma_t) will be able to be accurately
     # represented by the code. 
-    min_mfp = np.zeros((M))
+    max_mfp = np.zeros((M))
     for m in range(M):
         mat_Sigma_t = Sigma_t[m]
-        min_mfp[m] = 1/np.min(mat_Sigma_t[np.nonzero(mat_Sigma_t)])
-    width = [10*min_mfp[0],10*min_mfp[1]] # width array, in order of materials from left to right
-    I = [1000,100]                              # number of mesh points, same order as above
+        # The following 4 lines handle the error that would arise if there is
+        # a void. If Sigma_t was set to be zero, the nonzero function would
+        # cause an error. The exception sets the max_mfp to be one for each group
+        # and in the width definition below, the number 10 can be modified to 
+        # change the width of the void.
+        try:
+            max_mfp[m] = 1/np.min(mat_Sigma_t[np.nonzero(mat_Sigma_t)])
+        except:
+            max_mfp[m] = 1
+        # if np.min(mat_Sigma_t[np.nonzero(mat_Sigma_t)])==0:
+        #     max_mfp[m] = 1
+        # else:
+        #     max_mfp[m] = 1/np.min(mat_Sigma_t[np.nonzero(mat_Sigma_t)])
+    width = [10*max_mfp[0],10*max_mfp[1]] # width array, in order of materials from left to right
+    I = [1000,1000]                             # number of mesh points, same order as above
     h = [width[0]/I[0], width[1]/I[1]]          # mesh size, same order as above
     return h,I,width
 
@@ -122,9 +134,21 @@ def march_psi(material_index, group, position_index, angle_index, psi_new, Sigma
     # uses it to calculate the angular flux at the (i+1)th position. It is based
     # on the transport equation for a slab, using the diamond difference method.
     if (direction==0):
-        next_psi = (1+(Sigma_t[material,group]*h[material])/(2*mu[n]))**(-1)*(psi_new[group,i,n]*(1-(h[material]*Sigma_t[material,group])/(2*mu[n])) + h[material]*q/mu[n])
+        # The following if statement handles a void material. If the total
+        # cross-section is defined as 0, then it will keep the flux at the same
+        # value throughout.
+        if Sigma_t[material,group]==0:
+            next_psi = psi_new[group,i,n]
+        else:
+            next_psi = (1+(Sigma_t[material,group]*h[material])/(2*mu[n]))**(-1)*(psi_new[group,i,n]*(1-(h[material]*Sigma_t[material,group])/(2*mu[n])) + h[material]*q/mu[n])
     else:
-        next_psi = ((Sigma_t[material,group]*h[material])/(2*(mu[-(n+1)]))-1)**(-1)*(h[material]*q/mu[-(n+1)] - psi_new[group,-(i+1),-(n+1)]*((h[material]*Sigma_t[material,group])/(2*(mu[-(n+1)]))+1))
+        # The following if statement handles a void material. If the total
+        # cross-section is defined as 0, then it will keep the flux at the same
+        # value throughout.
+        if Sigma_t[material,group]==0:
+            next_psi = psi_new[group,-(i+1),-(n+1)]
+        else:
+            next_psi = ((Sigma_t[material,group]*h[material])/(2*(mu[-(n+1)]))-1)**(-1)*(h[material]*q/mu[-(n+1)] - psi_new[group,-(i+1),-(n+1)]*((h[material]*Sigma_t[material,group])/(2*(mu[-(n+1)]))+1))
     return next_psi
 
 def calculate_flux(G,I,N,w,psi_new,):
