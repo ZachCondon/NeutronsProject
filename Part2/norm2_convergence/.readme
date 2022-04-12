@@ -1,0 +1,1 @@
+This folder has all the files using the norm2_convergence and code to run the simulations with a mesh size that adapts to the size of the system so that all mesh points are the same size.
